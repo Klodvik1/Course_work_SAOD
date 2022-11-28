@@ -171,14 +171,24 @@ void search(biography* index[], int tree) {
 }
 
 void AVL_search() {
+  page = 0;
   std::cout << "Enter key search (Author)";
-  char ch;
+  char ch[12];
   std::cin >> ch;
   clean();
   struct tree* Root = NULL;
   tLE* p = Q.head;
-  AddAVL_Tree(Root, p->next, 0);
-  output_AVL(Root);
+  while (p != NULL) {
+    if (strncmp(ch, p->data->author, strlen(ch)) == 0) {
+      AddAVL_Tree(Root, p);
+    }
+    p = p->next;
+  }
+  if (Root == NULL) {
+    AVL_output(Root);
+  } else {
+    std::cout << "There is no such author";
+  }
   DestroyTree(Root);
 }
 
@@ -266,7 +276,7 @@ void RL_turn(tree*& p) {
   p = r;
 }
 
-void AddAVL_Tree(tree*& p, tLE* D, int mid) {
+void AddAVL_Tree(tree*& p, tLE* D) {
   if (p == NULL) {
     p = new struct tree;
     p->Data = D->data;
@@ -274,12 +284,9 @@ void AddAVL_Tree(tree*& p, tLE* D, int mid) {
     p->Right = NULL;
     p->Middle = NULL;
     p->Bal = 0;
-    if (mid == 0) {
-      Rost = 1;
-    }
   } else {
     if (strcmp(p->Data->author, D->data->author) > 0) {
-      AddAVL_Tree(p->Left, D, 0);
+      AddAVL_Tree(p->Left, D);
       if (Rost == 1) {
         if (p->Bal > 0) {
           p->Bal = 0;
@@ -301,7 +308,7 @@ void AddAVL_Tree(tree*& p, tLE* D, int mid) {
       }
     } else {
       if (strcmp(p->Data->author, D->data->author) < 0) {
-        AddAVL_Tree(p->Right, D, 0);
+        AddAVL_Tree(p->Right, D);
         if (Rost == 1) {
           if (p->Bal < 0) {
             p->Bal = 0;
@@ -322,7 +329,7 @@ void AddAVL_Tree(tree*& p, tLE* D, int mid) {
           }
         }
       } else if (strcmp(p->Data->author, D->data->author) == 0) {
-        AddAVL_Tree(p->Middle, D, 1);
+        AddAVL_Tree(p->Middle, D);
       }
     }
   }
@@ -334,19 +341,6 @@ void DestroyTree(tree* p) {
     DestroyTree(p->Right);
     DestroyTree(p->Middle);
     delete (p);
-  }
-}
-
-void output_AVL(tree* p) {
-  page = 0;
-  while (p->Middle != NULL) {
-    std::cout << std::setw(2) << page + 1 << ' ' << std::setw(12)
-              << p->Data->author << std::setw(35) << p->Data->title
-              << std::setw(20) << p->Data->publishing;
-    std::cout << std::setw(10) << p->Data->year << std::setw(10)
-              << p->Data->pages << std::endl;
-    p = p->Middle;
-    page++;
   }
 }
 
@@ -364,13 +358,24 @@ void output_queue() {
   }
 }
 
-void AVL_key(tree* p, int key) {
+void AVL_output(tree* p) {
+  tree* q = p;
   if (p != NULL) {
-    if (p->Data->year == key) {
-      output_AVL(p);
-    }
-    AVL_key(p->Left, key);
-    AVL_key(p->Right, key);
+    int i = 0;
+    do {
+      std::cout << std::setw(2);
+      i == 0 ? std::cout << page + 1 : std::cout << "   ";
+      std::cout << ' ' << std::setw(12);
+      std::cout << q->Data->author << std::setw(35) << q->Data->title;
+      std::cout << std::setw(20) << q->Data->publishing;
+      std::cout << std::setw(10) << q->Data->year << std::setw(10);
+      std::cout << q->Data->pages << std::endl;
+      q = q->Middle;
+      i++;
+    } while (q != NULL);
+    page++;
+    AVL_output(p->Left);
+    AVL_output(p->Right);
   }
 }
 
