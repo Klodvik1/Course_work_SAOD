@@ -18,7 +18,9 @@ void menu(void) {
   char choice;
   while (flag == 1) {
     std::cout << "Menu:\n1) Output database\n2) Output sort database\n";
-    std::cout << "3) Search\n4) AVL-tree\n5) End the programm" << std::endl;
+    std::cout
+        << "3) Search\n4) AVL-tree\n5) Encoding Haffman\n6) End the programm"
+        << std::endl;
     std::cin >> choice;
     clean();
     switch (choice) {
@@ -41,6 +43,11 @@ void menu(void) {
         break;
       }
       case '5': {
+        encoding();
+        clean();
+        break;
+      }
+      case '6': {
         flag = 0;
         break;
       }
@@ -154,7 +161,7 @@ void search(biography* index[], int tree) {
     if (Q.head == NULL) {
       std::cout << "There is no such year in the database\n" << std::endl;
     } else {
-      output_queue();  // Ввывод очереди
+      output_queue();
       if (tree == 1) {
         AVL_search();
       }
@@ -184,12 +191,122 @@ void AVL_search() {
     }
     p = p->next;
   }
-  if (Root == NULL) {
+  if (Root != NULL) {
     AVL_output(Root);
   } else {
     std::cout << "There is no such author";
   }
   DestroyTree(Root);
+}
+
+void encoding() {
+  int n = 0;
+  float total = 0;
+  char ch;
+  coding temp;
+  FILE* f;
+  f = fopen("testBase1.dat", "rb");
+  while (!feof(f)) {
+    char ch;
+    int flag = 1;
+    ch = fgetc(f);
+    if (!feof(f)) {
+      total++;
+      for (int i = 0; i < n; i++) {
+        if (ptr[i].symbol == ch) {
+          ptr[i].probability += 1;
+          flag = 0;
+          break;
+        }
+      }
+      if (flag == 1) {
+        ptr[n].symbol = ch;
+        ptr[n].probability = 1;
+        n++;
+      }
+    }
+  }
+  fclose(f);
+  for (int i = 0; i < n; i++) {
+    ptr[i].probability = ptr[i].probability / total;
+  }
+  sortByProbability(n, ptr);
+  double* chance_l = new double[n];
+  for (int i = 0; i < n; ++i) {
+    ptr[i].length = 0;
+    chance_l[i] = ptr[i].probability;
+  }
+  Haffman(n, chance_l, ptr);
+  output_encoding(n, ptr);
+  delete (chance_l);
+}
+
+void sortByProbability(int n, coding ptr[]) {
+  coding temp;
+  for (int j = 1; j <= n - 1; j++) {
+    for (int i = 0; i < n - 1; i++) {
+      if ((ptr[i].probability) < (ptr[i + 1].probability)) {
+        temp.probability = ptr[i].probability;
+        temp.symbol = ptr[i].symbol;
+
+        ptr[i].probability = ptr[i + 1].probability;
+        ptr[i].symbol = ptr[i + 1].symbol;
+
+        ptr[i + 1].probability = temp.probability;
+        ptr[i + 1].symbol = temp.symbol;
+      }
+    }
+  }
+}
+
+void Haffman(int h, double* array, coding ptr[]) {
+  if (h == 2) {
+    ptr[0].binary[0] = 0;
+    ptr[0].length = 1;
+    ptr[1].binary[0] = 1;
+    ptr[1].length = 1;
+  } else {
+    double q = array[h - 2] + array[h - 1];
+    int j = up(h, q, array);
+    Haffman(h - 1, array, ptr);
+    down(h, j, ptr);
+  }
+}
+
+void down(int n, int j, coding ptr[]) {
+  int pref[20];
+  for (int i = 0; i < 20; i++) pref[i] = ptr[j].binary[i];
+  int l = ptr[j].length;
+  for (int i = j; i < n - 2; i++) {
+    for (int k = 0; k < 20; k++) ptr[i].binary[k] = ptr[i + 1].binary[k];
+    ptr[i].length = ptr[i + 1].length;
+  }
+  for (int i = 0; i < 20; i++) {
+    ptr[n - 2].binary[i] = pref[i];
+    ptr[n - 1].binary[i] = pref[i];
+  }
+  ptr[n - 1].binary[l] = 1;
+  ptr[n - 2].binary[l] = 0;
+  ptr[n - 1].length = l + 1;
+  ptr[n - 2].length = l + 1;
+}
+
+int up(int n, double q, double* array) {
+  int i = 0, j = 0;
+  for (i = n - 2; i >= 1; i--) {
+    if (array[i - 1] < q)
+      array[i] = array[i - 1];
+    else {
+      j = i;
+      break;
+    }
+    if ((i - 1) == 0 && ptr[i - 1].probability < q) {
+      j = 0;
+      break;
+    }
+  }
+  array[j] = q;
+  return j;
 }
 
 void push(tLE* p) {
@@ -361,22 +478,41 @@ void output_queue() {
 void AVL_output(tree* p) {
   tree* q = p;
   if (p != NULL) {
-    int i = 0;
     do {
       std::cout << std::setw(2);
-      i == 0 ? std::cout << page + 1 : std::cout << "   ";
+      std::cout << page + 1;
       std::cout << ' ' << std::setw(12);
       std::cout << q->Data->author << std::setw(35) << q->Data->title;
       std::cout << std::setw(20) << q->Data->publishing;
       std::cout << std::setw(10) << q->Data->year << std::setw(10);
       std::cout << q->Data->pages << std::endl;
       q = q->Middle;
-      i++;
+      page++;
     } while (q != NULL);
-    page++;
     AVL_output(p->Left);
     AVL_output(p->Right);
   }
+}
+
+void output_encoding(int n, coding ptr[]) {
+  std::cout << " Nom | Symbol |\tProbability\t|\t\tCode\t\t|";
+  double avgHaffman = 0, entropy = 0;
+  for (int i = 0; i < n; i++) {
+    std::cout << "\n_____|________|_________________|_______________________________|\n";
+    avgHaffman += ptr[i].probability * ptr[i].length;
+    entropy += ptr[i].probability * log2(ptr[i].probability);
+    std::cout << std::setw(3) << i + 1 << std::setw(3) << "|" << std::setw(4);
+    std::cout << ptr[i].symbol << std::setw(5) << "|" << std::setw(15)
+              << ptr[i].probability << std::setw(3) << "|" << std::setw(12);
+    for (int j = 0; j <= ptr[i].length; j++) std::cout << ptr[i].binary[j];
+    std::cout << std::setw(20 - ptr[i].length) << "|";
+  }
+  std::cout << "\n_____|________|_________________|_______________________________|\n";
+  std::cout << "\n\nAverage Lenght Code Word: " << avgHaffman << std::endl;
+  std::cout << "Entropy: " << -entropy << std::endl;
+  std::cout << "\n\nPress the keyboard to exit ";
+  char ch;
+  std::cin >> ch;
 }
 
 void input_database(biography* index[]) {
