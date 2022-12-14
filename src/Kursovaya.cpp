@@ -25,11 +25,11 @@ void menu(void) {
     clean();
     switch (choice) {
       case '1': {
-        input_database(index);
+        output_database(index);
         break;
       }
       case '2': {
-        input_database(index_sort);
+        output_database(index_sort);
         break;
       }
       case '3': {
@@ -91,6 +91,9 @@ void HeapSort(biography* index[], int R) {
   }
   for (int j = 1, L = 0; j < R; j++) {
     if ((index[j]->year != index[j - 1]->year) || (j == R - 1)) {
+      if (j == R - 1) {
+        j++;
+      }
       j--;
       for (int i = (L + j) / 2; i >= L; i--) {
         HeapSort_author(index, i, j, L);
@@ -161,9 +164,10 @@ void search(biography* index[], int tree) {
     if (Q.head == NULL) {
       std::cout << "There is no such year in the database\n" << std::endl;
     } else {
-      output_queue();
       if (tree == 1) {
         AVL_search();
+      } else {
+        output_queue();
       }
       while (p != NULL) {
         p = Q.head;
@@ -178,30 +182,26 @@ void search(biography* index[], int tree) {
 }
 
 void AVL_search() {
+  struct tree* Root = NULL;
+  tLE* p = Q.head;
+  while (p != NULL) {
+    AddAVL_Tree(Root, p);
+    p = p->next;
+  }
   page = 0;
+  AVL_output(Root);
   std::cout << "Enter key search (Author)";
   char ch[12];
   std::cin >> ch;
   clean();
-  struct tree* Root = NULL;
-  tLE* p = Q.head;
-  while (p != NULL) {
-    if (strncmp(ch, p->data->author, strlen(ch)) == 0) {
-      AddAVL_Tree(Root, p);
-    }
-    p = p->next;
-  }
-  if (Root != NULL) {
-    AVL_output(Root);
-  } else {
-    std::cout << "There is no such author";
-  }
+  page = 0;
+  AVL_output_key(Root, ch);
   DestroyTree(Root);
 }
 
 void encoding() {
   int n = 0;
-  float total = 0;
+  float total = 0.0;
   char ch;
   coding temp;
   FILE* f;
@@ -231,7 +231,7 @@ void encoding() {
     ptr[i].probability = ptr[i].probability / total;
   }
   sortByProbability(n, ptr);
-  double* chance_l = new double[n];
+  long double* chance_l = new long double[n];
   for (int i = 0; i < n; ++i) {
     ptr[i].length = 0;
     chance_l[i] = ptr[i].probability;
@@ -259,7 +259,7 @@ void sortByProbability(int n, coding ptr[]) {
   }
 }
 
-void Haffman(int h, double* array, coding ptr[]) {
+void Haffman(int h, long double* array, coding ptr[]) {
   if (h == 2) {
     ptr[0].binary[0] = 0;
     ptr[0].length = 1;
@@ -291,7 +291,7 @@ void down(int n, int j, coding ptr[]) {
   ptr[n - 2].length = l + 1;
 }
 
-int up(int n, double q, double* array) {
+int up(int n, double q, long double* array) {
   int i = 0, j = 0;
   for (i = n - 2; i >= 1; i--) {
     if (array[i - 1] < q)
@@ -476,46 +476,79 @@ void output_queue() {
 }
 
 void AVL_output(tree* p) {
-  tree* q = p;
   if (p != NULL) {
-    do {
+    AVL_output(p->Left);
+    std::cout << std::setw(2);
+    std::cout << page + 1;
+    std::cout << ' ' << std::setw(12);
+    std::cout << p->Data->author << std::setw(35) << p->Data->title;
+    std::cout << std::setw(20) << p->Data->publishing;
+    std::cout << std::setw(10) << p->Data->year << std::setw(10);
+    std::cout << p->Data->pages << std::endl;
+    page++;
+    AVL_output(p->Middle);
+    AVL_output(p->Right);
+  }
+}
+
+void AVL_output_key(tree* p, char* key) {
+  if (p != NULL) {
+    AVL_output_key(p->Left, key);
+    if (strncmp(key, p->Data->author, strlen(key)) == 0) {
       std::cout << std::setw(2);
       std::cout << page + 1;
       std::cout << ' ' << std::setw(12);
-      std::cout << q->Data->author << std::setw(35) << q->Data->title;
-      std::cout << std::setw(20) << q->Data->publishing;
-      std::cout << std::setw(10) << q->Data->year << std::setw(10);
-      std::cout << q->Data->pages << std::endl;
-      q = q->Middle;
+      std::cout << p->Data->author << std::setw(35) << p->Data->title;
+      std::cout << std::setw(20) << p->Data->publishing;
+      std::cout << std::setw(10) << p->Data->year << std::setw(10);
+      std::cout << p->Data->pages << std::endl;
       page++;
-    } while (q != NULL);
-    AVL_output(p->Left);
-    AVL_output(p->Right);
+    }
+    AVL_output_key(p->Middle, key);
+    AVL_output_key(p->Right, key);
   }
 }
 
 void output_encoding(int n, coding ptr[]) {
   std::cout << " Nom | Symbol |\tProbability\t|\t\tCode\t\t|";
-  double avgHaffman = 0, entropy = 0;
+  long double avgHaffman = 0, entropy = 0;
+  int arg[14] = {0, 7, -79, 127, -80, 9, 15, 12, 11, 10, 8, 27, 13, 14};
+  const char* charg[14] = {"NOP1", "NOP2",  "NOP3",  "NOP4", "NOP5",
+                           "/t",   "NOP6",  "/n1",   "/n2",  "NOP6",
+                           "/n3",  "DEL->", "DEL<-", "NOP7"};
   for (int i = 0; i < n; i++) {
-    std::cout << "\n_____|________|_________________|_______________________________|\n";
+    std::cout << "\n_____|________|_________________|__________________________"
+                 "_____|\n";
     avgHaffman += ptr[i].probability * ptr[i].length;
     entropy += ptr[i].probability * log2(ptr[i].probability);
     std::cout << std::setw(3) << i + 1 << std::setw(3) << "|" << std::setw(4);
-    std::cout << ptr[i].symbol << std::setw(5) << "|" << std::setw(15)
-              << ptr[i].probability << std::setw(3) << "|" << std::setw(12);
+    int flag = 0;
+    for (int j = 0; j < 14; j++) {
+      if (arg[j] == ptr[i].symbol) {
+        flag = 1;
+        printf("  %s", charg[j]);
+        std::cout << std::setw(3);
+        break;
+      }
+    }
+    if (flag == 0) {
+      std::cout << ptr[i].symbol << std::setw(5);
+    }
+    std::cout << "|" << std::setw(15) << ptr[i].probability << std::setw(3)
+              << "|" << std::setw(12);
     for (int j = 0; j <= ptr[i].length; j++) std::cout << ptr[i].binary[j];
     std::cout << std::setw(20 - ptr[i].length) << "|";
   }
-  std::cout << "\n_____|________|_________________|_______________________________|\n";
+  std::cout << "\n_____|________|_________________|____________________________"
+               "___|\n";
   std::cout << "\n\nAverage Lenght Code Word: " << avgHaffman << std::endl;
-  std::cout << "Entropy: " << -entropy << std::endl;
+  printf("Entropy: %.10Lf \n", -entropy);
   std::cout << "\n\nPress the keyboard to exit ";
   char ch;
   std::cin >> ch;
 }
 
-void input_database(biography* index[]) {
+void output_database(biography* index[]) {
   int n = 1;
   char choice;
   int countMax = MAX / 20, flag = 1, i = 0;

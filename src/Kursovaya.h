@@ -1,5 +1,6 @@
 #pragma once
-#include <string.h>
+#include <cstring>
+#include <string>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
@@ -37,7 +38,7 @@ struct tree {
 
 struct coding {
   char symbol;
-  float probability;
+  long double probability;
   int binary[500];
   int length;
 } ptr[500];
@@ -54,9 +55,9 @@ void search(biography* index[], int);
 void AVL_search();
 void encoding();
 void sortByProbability(int, coding ptr[]);
-void Haffman(int, double *array, coding ptr[]);
+void Haffman(int, long double *array, coding ptr[]);
 void down(int, int, coding ptr[]);
-int  up(int, double, double *array);
+int  up(int, double, long double *array);
 void push(tLE* p);
 void pop();
 void LL_turn(tree*& p);
@@ -67,6 +68,7 @@ void DestroyTree(tree* p);
 void AddAVL_Tree(tree*& p, tLE* D);
 void output_queue();
 void AVL_output(tree* p);
+void AVL_output_key(tree* p, char* key);
 void output_encoding(int, coding ptr[]);
-void input_database(biography* index[]);
+void output_database(biography* index[]);
 void clean(void);
