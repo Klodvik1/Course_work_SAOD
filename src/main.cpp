@@ -1,4 +1,4 @@
-#include "Kursovaya.h"
+#include "main.h"
 
 int main(void) {
   menu();
@@ -19,7 +19,7 @@ void menu(void) {
   while (flag == 1) {
     std::cout << "Menu:\n1) Output database\n2) Output sort database\n";
     std::cout
-        << "3) Search\n4) AVL-tree\n5) Encoding Haffman\n6) End the programm"
+        << "3) Search queue\n4) Search AVL-tree\n5) Encoding Haffman\n6) End the programm"
         << std::endl;
     std::cin >> choice;
     clean();
@@ -202,8 +202,6 @@ void AVL_search() {
 void encoding() {
   int n = 0;
   float total = 0.0;
-  char ch;
-  coding temp;
   FILE* f;
   f = fopen("testBase1.dat", "rb");
   while (!feof(f)) {
@@ -273,7 +271,7 @@ void Haffman(int h, long double* array, coding ptr[]) {
   }
 }
 
-void down(int n, int j, coding ptr[]) {
+void down(int n, int j, coding ptr[]) { 
   int pref[20];
   for (int i = 0; i < 20; i++) pref[i] = ptr[j].binary[i];
   int l = ptr[j].length;
@@ -543,6 +541,7 @@ void output_encoding(int n, coding ptr[]) {
                "___|\n";
   std::cout << "\n\nAverage Lenght Code Word: " << avgHaffman << std::endl;
   printf("Entropy: %.10Lf \n", -entropy);
+  printf ("%.10Lf < %.10Lf", avgHaffman, -entropy +1);
   std::cout << "\n\nPress the keyboard to exit ";
   char ch;
   std::cin >> ch;
